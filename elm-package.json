@@ -1,0 +1,22 @@
+{
+    "version": "1.0.0",
+    "summary": "Read only view of any github project's issues",
+    "repository": "https://github.com/justinwhite/read-only-github.git",
+    "license": "MIT",
+    "source-directories": [
+        "src",
+        "dist"
+    ],
+    "exposed-modules": [],
+    "dependencies": {
+        "elm-lang/core": "4.0.1 <= v < 5.0.0",
+        "elm-lang/html": "1.0.0 <= v < 3.0.0",
+        "evancz/elm-http": "3.0.1 <= v < 4.0.0",
+        "justinmimbs/elm-date-extra": "2.0.0 <= v < 3.0.0",
+        "lukewestby/elm-http-builder": "3.0.0 <= v < 4.0.0",
+        "rgrempel/elm-http-decorators": "1.0.2 <= v < 2.0.0",
+        "tiziano88/elm-oauth": "1.2.1 <= v < 2.0.0",
+        "truqu/elm-base64": "1.0.4 <= v < 2.0.0"
+    },
+    "elm-version": "0.17.0 <= v < 0.18.0"
+}

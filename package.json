@@ -1,0 +1,23 @@
+{
+  "name": "read-only-github",
+  "version": "1.0.0",
+  "description": "Read only view of any github project's issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/justinwhite/read-only-github.git"
+  },
+  "author": "justinwhite",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/justinwhite/read-only-github/issues"
+  },
+  "homepage": "https://github.com/justinwhite/read-only-github#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-connect": "^4.0.0",
+    "gulp-elm": "^0.4.4",
+    "gulp-plumber": "^1.1.0",
+    "gulp-util": "^3.0.7"
+  }
+}
