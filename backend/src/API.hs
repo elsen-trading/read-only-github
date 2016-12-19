@@ -183,11 +183,11 @@ getTargetIssues cfg = do
   cs <- getTargetColumns cfg
   fmap fromList $ mapConcurrently (getIssues cfg) cs
 
-refresh :: Config -> IO State
+refresh :: Config -> IO Bool
 refresh cfg = do
   issues <- getTargetIssues cfg
   atomically $ writeTVar (_cfgstate cfg) issues
-  return issues
+  return True
 
 base :: String
 base = "https://api.github.com"
@@ -239,7 +239,7 @@ type Api =
   :<|> "api"
           :> "refresh"
           :> BasicAuth "foobar" User
-          :> Get '[JSON] State
+          :> Get '[JSON] Bool
 
 server :: Config -> Server Api
 server cfg = let

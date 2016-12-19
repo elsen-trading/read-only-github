@@ -57,7 +57,7 @@ type Msg
   | LoginPass String
   | AttemptRefresh
   | RefreshFail Http.Error
-  | RefreshPass String
+  | RefreshPass Bool
 
 defaultModel : Model
 defaultModel =
@@ -136,7 +136,7 @@ update msg model =
     AttemptRefresh ->
       (model, tryRefresh model)
     RefreshPass _ ->
-      (model, Cmd.none)
+      (model, loadColumns model.credentials.token)
     RefreshFail err ->
       (model, Cmd.none)
 
@@ -362,7 +362,7 @@ tryLogin model =
 tryRefresh : Model -> Cmd Msg
 tryRefresh model =
   let
-    t = get model.credentials.token Decode.string refreshURL
+    t = get model.credentials.token Decode.bool refreshURL
   in
     Task.perform RefreshFail RefreshPass t
 
