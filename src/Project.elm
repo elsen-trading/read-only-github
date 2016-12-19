@@ -17,14 +17,13 @@ type alias Issue =
   , state : String
   , comments : Int
   , updated_at : String
-  , body : String
   }
 
 type alias ColumnId = Int
 
 issue : Decode.Decoder Issue
 issue =
-  Decode.object8 Issue
+  Decode.object7 Issue
     ("url" := Decode.string)
     ("html_url" := Decode.string) 
     ("number" := Decode.int)
@@ -32,7 +31,6 @@ issue =
     ("state" := Decode.string)
     ("comments" := Decode.int)
     ("updated_at" := Decode.string)
-    ("body" := Decode.string)
 
 columnId : Decode.Decoder ColumnId
 columnId = Decode.int

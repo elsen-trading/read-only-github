@@ -98,7 +98,6 @@ data Issue = Issue
            , _istate :: String
            , _icomments :: Int
            , _iupdated_at :: String
-           , _ibody :: String
            } deriving (Show,Generic)
 
 instance ToJSON Issue where
