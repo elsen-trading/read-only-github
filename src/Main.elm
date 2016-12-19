@@ -31,8 +31,8 @@ type alias Credentials =
   }
 
 type alias Model =
-  { columns : List Column
-  , issues : Dict ColumnId (List Issue)
+  { columns : List Column -- the available columns
+  , issues : List Issue -- issues of the selected column
   , selectedColumn : Maybe ColumnId
   , name : String
   , link : String
@@ -44,7 +44,7 @@ type Msg
   = ColumnPass (List Column)
   | ColumnFail Http.Error
   | ColumnSelected ColumnId
-  | IssuePass ColumnId (List Issue)
+  | IssuePass (List Issue)
   | IssueFail Http.Error
   | NamePass String
   | NameFail Http.Error
@@ -55,10 +55,13 @@ type Msg
   | AttemptLogin
   | LoginFail Http.Error
   | LoginPass String
+  | AttemptRefresh
+  | RefreshFail Http.Error
+  | RefreshPass String
 
 defaultModel : Model
 defaultModel =
-  Model [] Dict.empty Nothing "" "" False defaultCreds
+  Model [] [] Nothing "" "" False defaultCreds
 
 defaultCreds : Credentials
 defaultCreds = Credentials "" "" Nothing
@@ -83,19 +86,16 @@ update msg model =
       let
         model' = { model | columns = cs }
       in
-        (model', loadAllColumns model')
+        (model', defaultSelect model')
     ColumnFail err ->
       (model, Cmd.none)
     ColumnSelected i ->
       let
         model' = { model | selectedColumn = Just i }
       in
-        (model', loadIssues model.credentials.token model.issues i)
-    IssuePass cid is ->
-      let
-        issues' = Dict.insert cid is model.issues
-      in
-        ({ model | issues = issues' }, Cmd.none)
+        (model', loadIssues model.credentials.token i)
+    IssuePass is ->
+      ({ model | issues = is }, Cmd.none)
     IssueFail err ->
       (model, Cmd.none)
     NamePass n ->
@@ -133,6 +133,12 @@ update msg model =
         (model', loadAll model')
     LoginFail err ->
       ({ model | authenticated = False }, Cmd.none)
+    AttemptRefresh ->
+      (model, tryRefresh model)
+    RefreshPass _ ->
+      (model, Cmd.none)
+    RefreshFail err ->
+      (model, Cmd.none)
 
 view : Model -> Html Msg
 view model =
@@ -189,19 +195,22 @@ authenticatedView model =
         [ href model.link ]
         [ text model.name ]
       ]
-    , dropdowns model.columns
+    , buttons model.columns
     ]
     , issueTable model
   ]
 
+refreshButton : Html Msg
+refreshButton =
+  button
+  [ type' "button"
+  , class "btn btn-primary form-inline button-bar"
+  , onClick AttemptRefresh
+  ]
+  [ text "Refresh" ]
+
 issueTable : Model -> Html Msg
-issueTable m =
-  case m.selectedColumn of
-    Nothing -> text "Loading project columns.."
-    Just c  ->
-      case Dict.get c m.issues of
-        Nothing -> text "Loading column issues.."
-        Just is -> generateTable is
+issueTable m = generateTable m.issues
 
 generateTable : List Issue -> Html Msg
 generateTable is =
@@ -258,12 +267,13 @@ statusColor status =
     True  -> class "status-closed"
     False -> class "status-open"
 
-dropdowns : List Column -> Html Msg
-dropdowns cs =
+buttons : List Column -> Html Msg
+buttons cs =
   Html.form
   [ class "form-inline"
   ]
   [ columnsDropDown cs
+  , refreshButton
   ]
 
 selected : Decode.Decoder ColumnId
@@ -279,7 +289,7 @@ onSelect m =
 
 columnsDropDown : List Column -> Html Msg
 columnsDropDown xs =
-  select [ class "form-control"
+  select [ class "form-control button-bar"
          , onSelect ColumnSelected
          ] (List.map column2Option xs)
 
@@ -299,48 +309,38 @@ nameURL = server ++ "/name"
 linkURL : String
 linkURL = server ++ "/link"
 
+refreshURL : String
+refreshURL = server ++ "/refresh"
+
 issuesURL : ColumnId -> String
 issuesURL cid = columnsURL ++ "/" ++ toString cid
 
 loadColumns : Maybe String -> Cmd Msg
 loadColumns token =
-  --Task.perform ColumnFail ColumnPass (Http.get columns columnsURL)
   Task.perform ColumnFail ColumnPass (get token columns columnsURL)
 
-loadIssues : Maybe String -> Dict ColumnId (List Issue) -> ColumnId -> Cmd Msg
-loadIssues token is cid =
-  let
-    is' = case Dict.get cid is of
-      Nothing -> 
-        --Http.get issues (issuesURL cid)
-        get token issues (issuesURL cid)
-      Just is ->
-        Task.succeed is
-  in
-    Task.perform IssueFail (IssuePass cid) is'
+loadIssues :
+     Maybe String
+  -> ColumnId
+  -> Cmd Msg
+loadIssues token cid =
+  Task.perform IssueFail IssuePass (get token issues (issuesURL cid))
 
 loadName : Maybe String -> Cmd Msg
 loadName token =
-  --Task.perform NameFail NamePass (Http.get Decode.string nameURL)
   Task.perform NameFail NamePass (get token Decode.string nameURL)
 
 loadLink : Maybe String -> Cmd Msg
 loadLink token =
-  --Task.perform LinkFail LinkPass (Http.get Decode.string linkURL)
   Task.perform LinkFail LinkPass (get token Decode.string linkURL)
 
-loadAllColumns : Model -> Cmd Msg
-loadAllColumns model =
-  let
-    ids  = List.map .id model.columns
-    iss  = loadIssues model.credentials.token model.issues
-    load = List.map iss ids
-    sel1 = case List.head ids of
-      Nothing -> Cmd.none
-      Just id -> Task.perform ColumnSelected ColumnSelected (Task.succeed id)
-    cmds = sel1 :: load
-  in
-    Cmd.batch cmds
+-- select the first column, if there is one
+defaultSelect : Model -> Cmd Msg
+defaultSelect model =
+  case List.head model.columns of
+    Nothing -> Cmd.none
+    Just c  ->
+      Task.perform ColumnSelected ColumnSelected (Task.succeed (.id c))
 
 genToken : Model -> String
 genToken model =
@@ -358,6 +358,13 @@ tryLogin model =
     t = get model.credentials.token Decode.string nameURL
   in
     Task.perform LoginFail LoginPass t
+
+tryRefresh : Model -> Cmd Msg
+tryRefresh model =
+  let
+    t = get model.credentials.token Decode.string refreshURL
+  in
+    Task.perform RefreshFail RefreshPass t
 
 get :
      Maybe String

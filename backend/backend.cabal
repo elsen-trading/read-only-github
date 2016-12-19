@@ -30,6 +30,7 @@ executable backend
                      , lens
                      , servant
                      , servant-server
+                     , stm
                      , text
                      , wai
                      , wai-cors

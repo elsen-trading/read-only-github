@@ -22,3 +22,7 @@ li {
 .page-header {
   margin: 10px 0;
 }
+
+.button-bar + .button-bar {
+  margin-left: 10px;
+}

@@ -15,7 +15,9 @@
 module API where
 
 import Control.Concurrent.Async
+import Control.Concurrent.STM.TVar
 import Control.Monad.IO.Class
+import Control.Monad.STM
 import Control.Lens
 import Data.Aeson
 import Data.Aeson.Types
@@ -31,6 +33,9 @@ import Network.Wreq hiding (Proxy)
 import Servant
 import Text.InterpolatedString.Perl6
 
+type Data = (Column, [Issue])
+type State = Map ColumnId Data
+
 data Config = Config
             { _cfgheader :: String
             , _cfgrepo :: String
@@ -38,7 +43,8 @@ data Config = Config
             , _cfgtoken :: ByteString
             , _cfgapi :: ByteString
             , _cfglogins :: [(ByteString,ByteString)]
-            } deriving (Show)
+            , _cfgstate :: TVar State
+            }
 
 data Project = Project
              { _pid :: Int
@@ -56,6 +62,9 @@ instance FromJSON Project where
             { fieldLabelModifier = drop 2 }
 
 type ColumnId = Int
+
+instance ToJSON State where
+  toJSON = toJSON . Map.toList
 
 data Column = Column
             { _cid :: ColumnId
@@ -132,10 +141,15 @@ getTargetColumns cfg = do
     Nothing -> return []
     Just p  -> getColumns cfg p
 
-getCards :: Config -> Column -> IO (String,[Card])
+columnsFromState :: Config -> IO [Column]
+columnsFromState cfg = do
+  state <- readTVarIO $ _cfgstate cfg
+  return $ map fst (Map.elems state)
+
+getCards :: Config -> Column -> IO (ColumnId,[Card])
 getCards cfg c = do
   res <- getWith (opts cfg) $ cardsURL $ _cid c
-  return $ (,) (_cname c) $ either error id . eitherDecode $ res ^. responseBody
+  return $ (,) (_cid c) $ either error id . eitherDecode $ res ^. responseBody
 
 getColumnCards :: Config -> ColumnId -> IO [Card]
 getColumnCards cfg cid = do
@@ -147,15 +161,33 @@ getColumnIssues cfg cid = do
   cards <- getColumnCards cfg cid
   mapConcurrently (getIssue cfg) cards
 
-getTargetCards :: Config -> IO (Map String [Card])
-getTargetCards cfg = do
-  columns <- getTargetColumns cfg
-  fmap fromList $ mapM (getCards cfg) columns
+issuesFromState :: Config -> ColumnId -> IO [Issue]
+issuesFromState cfg cid = do
+  state <- readTVarIO (_cfgstate cfg)
+  return $ case Map.lookup cid state of
+    Nothing -> []
+    Just d  -> snd d
 
 getIssue :: Config -> Card -> IO Issue
 getIssue cfg c = do
   res <- getWith (opts cfg) $ _cardcontent_url c
   return $ either error id . eitherDecode $ res ^. responseBody
+
+getIssues :: Config -> Column -> IO (ColumnId, Data)
+getIssues cfg c = do
+  issues <- getColumnIssues cfg (_cid c)
+  return ((_cid c), (c, issues))
+
+getTargetIssues :: Config -> IO State
+getTargetIssues cfg = do
+  cs <- getTargetColumns cfg
+  fmap fromList $ mapConcurrently (getIssues cfg) cs
+
+refresh :: Config -> IO State
+refresh cfg = do
+  issues <- getTargetIssues cfg
+  atomically $ writeTVar (_cfgstate cfg) issues
+  return issues
 
 base :: String
 base = "https://api.github.com"
@@ -204,14 +236,19 @@ type Api =
           :> "link"
           :> BasicAuth "foobar" User
           :> Get '[JSON] String
+  :<|> "api"
+          :> "refresh"
+          :> BasicAuth "foobar" User
+          :> Get '[JSON] State
 
 server :: Config -> Server Api
 server cfg = let
-  h1 (user :: User) = (liftIO $ getTargetColumns cfg)
-  h2 (user :: User) = (liftIO . getColumnIssues cfg)
+  h1 (user :: User) = (liftIO $ columnsFromState cfg)
+  h2 (user :: User) = (liftIO . issuesFromState cfg)
   h3 (user :: User) = (return $ mirrorName cfg)
   h4 (user :: User) = (liftIO $ getTargetProjectLink cfg)
-  in h1 :<|> h2 :<|> h3 :<|> h4
+  h5 (user :: User) = (liftIO $ refresh cfg)
+  in h1 :<|> h2 :<|> h3 :<|> h4 :<|> h5
 
 api :: Proxy Api
 api = Proxy
