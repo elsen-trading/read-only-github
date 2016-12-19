@@ -22,11 +22,3 @@ li {
 .page-header {
   margin: 10px 0;
 }
-
-.status-open {
-  background-color: #6cc644;
-}
-
-.status-closed {
-  background-color: #bd2c00;
-}
