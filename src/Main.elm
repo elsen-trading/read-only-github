@@ -148,7 +148,7 @@ view model =
 
 nonauthenticatedView : Model -> Html Msg
 nonauthenticatedView model =
-  Html.form []
+  Html.form [ class "login-page" ]
   [ div
     [ class "form-group"
     ]
@@ -177,7 +177,7 @@ nonauthenticatedView model =
     ]
   , button
     [ type' "button"
-    , class "btn btn-primary"
+    , class "btn btn-primary login-button"
     , onClick AttemptLogin
     ]
     [ text "Login" ]

@@ -1,6 +1,6 @@
 html {
   margin: 1em auto;
-  max-width: 1000px;
+  max-width: 1024px;
 }
 
 body {
@@ -25,4 +25,14 @@ li {
 
 .button-bar + .button-bar {
   margin-left: 10px;
+}
+
+.login-page {
+  margin: 1em auto;
+  max-width: 256px;
+}
+
+.login-button {
+  margin: 0 auto;
+  width: 100%;
 }
