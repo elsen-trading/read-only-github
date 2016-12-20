@@ -215,7 +215,7 @@ issueTable m = generateTable m.issues
 generateTable : List Issue -> Html Msg
 generateTable is =
   table
-  [ class "table" ]
+  [ class "table table-hover" ]
   [ thead []
     [ tr []
       [ th []
