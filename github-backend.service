@@ -1,0 +1,7 @@
+[Unit]
+Description="Backend of read only view of a single github project"
+
+[Service]
+Restart=always
+WorkingDirectory=/home/ubuntu/read-only-github/backend
+ExecStart=/home/ubuntu/read-only-github/backend/.stack-work/dist/x86_64-linux/Cabal-1.24.0.0/build/backend/backend

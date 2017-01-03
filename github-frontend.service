@@ -1,0 +1,7 @@
+[Unit]
+Description="Front end of read only view of a single github project"
+
+[Service]
+Restart=always
+WorkingDirectory=/home/ubuntu/read-only-github
+ExecStart=/home/ubuntu/read-only-github/node_modules/gulp/bin/gulp.js
