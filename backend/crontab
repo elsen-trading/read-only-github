@@ -1,0 +1,1 @@
+0 0 * * * curl -v http://localhost/api/refresh --user '<user>:<pass>'
