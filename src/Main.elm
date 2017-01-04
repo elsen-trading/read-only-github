@@ -273,7 +273,7 @@ buttons cs =
   [ class "form-inline"
   ]
   [ columnsDropDown cs
-  , refreshButton
+  -- , refreshButton
   ]
 
 selected : Decode.Decoder ColumnId
