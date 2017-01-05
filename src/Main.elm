@@ -11,6 +11,7 @@ import HttpBuilder as HB exposing (Error, Response)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import String exposing (join, toInt)
+import Table exposing (defaultCustomizations)
 import Task exposing (Task, perform, map)
 
 import Project exposing (..)
@@ -38,6 +39,7 @@ type alias Model =
   , link : String
   , authenticated : Bool
   , credentials : Credentials
+  , tableState : Table.State
   }
 
 type Msg 
@@ -58,10 +60,19 @@ type Msg
   | AttemptRefresh
   | RefreshFail Http.Error
   | RefreshPass Bool
+  | SetTableState Table.State
 
 defaultModel : Model
 defaultModel =
-  Model [] [] Nothing "" "" False defaultCreds
+  { columns = []
+  , issues = []
+  , selectedColumn = Nothing
+  , name = ""
+  , link = ""
+  , authenticated = False
+  , credentials = defaultCreds
+  , tableState = Table.initialSort "#"
+  }
 
 defaultCreds : Credentials
 defaultCreds = Credentials "" "" Nothing
@@ -139,6 +150,8 @@ update msg model =
       (model, loadColumns model.credentials.token)
     RefreshFail err ->
       (model, Cmd.none)
+    SetTableState st ->
+      ({ model | tableState = st }, Cmd.none)
 
 view : Model -> Html Msg
 view model =
@@ -197,7 +210,7 @@ authenticatedView model =
       ]
     , buttons model.columns
     ]
-    , issueTable model
+    , Table.view config model.tableState model.issues
   ]
 
 refreshButton : Html Msg
@@ -209,57 +222,55 @@ refreshButton =
   ]
   [ text "Refresh" ]
 
-issueTable : Model -> Html Msg
-issueTable m = generateTable m.issues
+tableCustomizations : Table.Customizations data Msg
+tableCustomizations =
+  { defaultCustomizations
+  | tableAttrs =
+      [ class "table table-hover"
+      ]
+  }
 
-generateTable : List Issue -> Html Msg
-generateTable is =
-  table
-  [ class "table table-hover" ]
-  [ thead []
-    [ tr []
-      [ th []
-        [ text "#" ]
-      , th []
-        [ text "Title" ]
-      , th []
-        [ text "Last Updated" ]
-      , th []
-        [ text "Comments" ]
-      , th []
-        [ text "Status" ]
+formatDate : Issue -> String
+formatDate issue =
+  case Date.fromIsoString issue.updated_at of
+    Nothing     -> issue.updated_at
+    Just parsed -> Date.toFormattedString "y-M-d" parsed
+
+config : Table.Config Issue Msg
+config =
+  Table.customConfig
+    { toId = (\x -> toString x.number)
+    , toMsg = SetTableState
+    , columns =
+        [ Table.intColumn "#" .number
+        , Table.stringColumn "Title" .title
+        , Table.stringColumn "Updated" formatDate
+        , Table.intColumn "Comments" .comments
+        , statusColumn "Status"
+        ]
+    , customizations = tableCustomizations
+    }
+
+statusColumn : String -> Table.Column Issue Msg
+statusColumn name =
+  Table.veryCustomColumn
+    { name = name
+    , viewData = \data -> statusLink data
+    , sorter = Table.increasingOrDecreasingBy .state
+    }
+
+statusLink : Issue -> Table.HtmlDetails Msg
+statusLink issue =
+  Table.HtmlDetails []
+    [ a
+      [ href issue.html_url
+      , target "blank"
+      ]
+      [ td
+        [ statusColor issue.state ]
+        [ text issue.state ]
       ]
     ]
-  , tbody []
-    ( List.map issue2row is )
-  ]
-
-issue2row : Issue -> Html Msg
-issue2row issue =
-  tr []
-  [ th [ scope "row" ]
-    [ text ( toString issue.number ) ]
-  , td []
-    [ text issue.title ]
-  , td []
-    [ text (formatDate issue.updated_at) ]
-  , td []
-    [ text ( toString issue.comments ) ]
-  , a
-    [ href issue.html_url
-    , target "blank"
-    ]
-    [ td
-      [ statusColor issue.state ]
-      [ text issue.state ]
-    ]
-  ]
-
-formatDate : String -> String
-formatDate date =
-  case Date.fromIsoString date of
-    Nothing     -> date
-    Just parsed -> Date.toFormattedString "y-M-d" parsed
 
 statusColor : String -> Attribute Msg
 statusColor status =

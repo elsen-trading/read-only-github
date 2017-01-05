@@ -19,6 +19,10 @@ li {
   margin-bottom: 20px;
 }
 
+td {
+  max-width: 500px;
+}
+
 .page-header {
   margin: 10px 0;
 }
