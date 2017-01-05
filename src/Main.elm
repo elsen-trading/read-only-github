@@ -259,7 +259,7 @@ formatDate : String -> String
 formatDate date =
   case Date.fromIsoString date of
     Nothing     -> date
-    Just parsed -> date
+    Just parsed -> Date.toFormattedString "y-M-d" parsed
 
 statusColor : String -> Attribute Msg
 statusColor status =
