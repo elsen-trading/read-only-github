@@ -98,12 +98,28 @@ data Issue = Issue
            , _istate :: String
            , _icomments :: Int
            , _iupdated_at :: String
+           , _ilabels :: [Label]
            } deriving (Show,Generic)
 
 instance ToJSON Issue where
   toJSON = genericToJSON defaultOptions
             { fieldLabelModifier = drop 2 }
 instance FromJSON Issue where
+  parseJSON = genericParseJSON defaultOptions
+            { fieldLabelModifier = drop 2 }
+
+data Label = Label
+           { _lid :: Int
+           , _lurl :: String
+           , _lname :: String
+           , _lcolor :: String
+           , _ldefault :: Bool
+           } deriving (Show, Generic)
+
+instance ToJSON Label where
+  toJSON = genericToJSON defaultOptions
+            { fieldLabelModifier = drop 2 }
+instance FromJSON Label where
   parseJSON = genericParseJSON defaultOptions
             { fieldLabelModifier = drop 2 }
 

@@ -17,13 +17,31 @@ type alias Issue =
   , state : String
   , comments : Int
   , updated_at : String
+  , labels : List Label
+  }
+
+type alias Label =
+  { id : Int
+  , url : String
+  , name : String
+  , color : String
+  , default : Bool
   }
 
 type alias ColumnId = Int
 
+label : Decode.Decoder Label
+label =
+  Decode.object5 Label
+    ("id" := Decode.int)
+    ("url" := Decode.string)
+    ("name" := Decode.string)
+    ("color" := Decode.string)
+    ("default" := Decode.bool)
+
 issue : Decode.Decoder Issue
 issue =
-  Decode.object7 Issue
+  Decode.object8 Issue
     ("url" := Decode.string)
     ("html_url" := Decode.string) 
     ("number" := Decode.int)
@@ -31,6 +49,7 @@ issue =
     ("state" := Decode.string)
     ("comments" := Decode.int)
     ("updated_at" := Decode.string)
+    ("labels" := Decode.list label)
 
 columnId : Decode.Decoder ColumnId
 columnId = Decode.int

@@ -244,12 +244,27 @@ config =
     , columns =
         [ Table.intColumn "#" .number
         , Table.stringColumn "Title" .title
+        , labelColumn "Tags"
         , Table.stringColumn "Updated" formatDate
         , Table.intColumn "Comments" .comments
         , statusColumn "Status"
         ]
     , customizations = tableCustomizations
     }
+
+labelColumn : String -> Table.Column Issue Msg
+labelColumn name =
+  Table.veryCustomColumn
+    { name = name
+    , viewData = \data -> combineLabels data
+    , sorter = Table.increasingOrDecreasingBy (\x -> List.length (.labels x))
+    }
+
+combineLabels : Issue -> Table.HtmlDetails Msg
+combineLabels issue =
+  Table.HtmlDetails []
+    [ text (join ", " (List.map .name issue.labels))
+    ]
 
 statusColumn : String -> Table.Column Issue Msg
 statusColumn name =
