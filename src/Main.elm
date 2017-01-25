@@ -256,21 +256,36 @@ labelColumn : String -> Table.Column Issue Msg
 labelColumn name =
   Table.veryCustomColumn
     { name = name
-    , viewData = \data -> combineLabels data
+    , viewData = combineLabels
     , sorter = Table.increasingOrDecreasingBy (\x -> List.length (.labels x))
     }
 
 combineLabels : Issue -> Table.HtmlDetails Msg
 combineLabels issue =
   Table.HtmlDetails []
-    [ text (join ", " (List.map .name issue.labels))
+    [ span [] (List.map createLabel issue.labels)
     ]
+
+labelStyle : String -> Attribute Msg
+labelStyle color =
+  style
+    [ ("backgroundColor", "#" ++ color)
+    , ("color", "#fff")
+    ]
+
+createLabel : Label -> Html Msg
+createLabel label =
+  div
+    [ labelStyle label.color
+    , class "label"
+    ]
+    [ text label.name ]
 
 statusColumn : String -> Table.Column Issue Msg
 statusColumn name =
   Table.veryCustomColumn
     { name = name
-    , viewData = \data -> statusLink data
+    , viewData = statusLink
     , sorter = Table.increasingOrDecreasingBy .state
     }
 
