@@ -246,7 +246,7 @@ config =
         , Table.stringColumn "Title" .title
         , labelColumn "Tags"
         , Table.stringColumn "Updated" formatDate
-        , Table.intColumn "Comments" .comments
+        -- , Table.intColumn "Comments" .comments
         , statusColumn "Status"
         ]
     , customizations = tableCustomizations

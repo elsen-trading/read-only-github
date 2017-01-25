@@ -21,6 +21,7 @@ li {
 
 td {
   max-width: 500px;
+  min-width: 120px;
 }
 
 .page-header {
@@ -54,4 +55,8 @@ td {
   float: left;
   padding: 3px 4px;
   margin: 3px;
+}
+
+.row .row-title {
+  float: left;
 }
