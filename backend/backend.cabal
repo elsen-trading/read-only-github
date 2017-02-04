@@ -24,6 +24,7 @@ executable backend
                      , bytestring
                      , containers
                      , configurator
+                     , distance-of-time
                      , either
                      , http-types
                      , interpolatedstring-perl6
@@ -32,6 +33,7 @@ executable backend
                      , servant-server
                      , stm
                      , text
+                     , time
                      , wai
                      , wai-cors
                      , warp

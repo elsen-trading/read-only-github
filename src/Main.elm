@@ -230,12 +230,6 @@ tableCustomizations =
       ]
   }
 
-formatDate : Issue -> String
-formatDate issue =
-  case Date.fromIsoString issue.updated_at of
-    Nothing     -> issue.updated_at
-    Just parsed -> Date.toFormattedString "y-M-d" parsed
-
 config : Table.Config Issue Msg
 config =
   Table.customConfig
@@ -245,7 +239,7 @@ config =
         [ Table.intColumn "#" .number
         , Table.stringColumn "Title" .title
         , labelColumn "Tags"
-        , Table.stringColumn "Updated" formatDate
+        , Table.stringColumn "Updated" .updated_distance
         -- , Table.intColumn "Comments" .comments
         , statusColumn "Status"
         ]

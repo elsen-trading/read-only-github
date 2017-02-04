@@ -2,6 +2,7 @@ module Project exposing (..)
 
 import Json.Decode as Decode
 import Json.Decode exposing ((:=))
+import Json.Decode.Extra exposing ((|:))
 
 type alias Column =
   { id : ColumnId
@@ -17,6 +18,7 @@ type alias Issue =
   , state : String
   , comments : Int
   , updated_at : String
+  , updated_distance : String
   , labels : List Label
   }
 
@@ -41,15 +43,16 @@ label =
 
 issue : Decode.Decoder Issue
 issue =
-  Decode.object8 Issue
-    ("url" := Decode.string)
-    ("html_url" := Decode.string) 
-    ("number" := Decode.int)
-    ("title" := Decode.string)
-    ("state" := Decode.string)
-    ("comments" := Decode.int)
-    ("updated_at" := Decode.string)
-    ("labels" := Decode.list label)
+  Decode.succeed Issue
+    |: ("url" := Decode.string)
+    |: ("html_url" := Decode.string)
+    |: ("number" := Decode.int)
+    |: ("title" := Decode.string)
+    |: ("state" := Decode.string)
+    |: ("comments" := Decode.int)
+    |: ("updated_at" := Decode.string)
+    |: ("updated_distance" := Decode.string)
+    |: ("labels" := Decode.list label)
 
 columnId : Decode.Decoder ColumnId
 columnId = Decode.int

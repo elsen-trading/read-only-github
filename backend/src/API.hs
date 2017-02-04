@@ -25,6 +25,9 @@ import qualified Data.ByteString as BS
 import Data.ByteString (ByteString, append)
 import qualified Data.Map as Map
 import Data.Map (Map, fromList)
+import Data.Time.Clock
+import Data.Time.Distance
+import Data.Time.Format
 import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
@@ -98,6 +101,7 @@ data Issue = Issue
            , _istate :: String
            , _icomments :: Int
            , _iupdated_at :: String
+           , _iupdated_distance :: Maybe String
            , _ilabels :: [Label]
            } deriving (Show,Generic)
 
@@ -105,8 +109,16 @@ instance ToJSON Issue where
   toJSON = genericToJSON defaultOptions
             { fieldLabelModifier = drop 2 }
 instance FromJSON Issue where
-  parseJSON = genericParseJSON defaultOptions
-            { fieldLabelModifier = drop 2 }
+  parseJSON (Object v) = Issue
+    <$> v .: "url"
+    <*> v .: "html_url"
+    <*> v .: "number"
+    <*> v .: "title"
+    <*> v .: "state"
+    <*> v .: "comments"
+    <*> v .: "updated_at"
+    <*> return Nothing
+    <*> v .: "labels"
 
 data Label = Label
            { _lid :: Int
@@ -186,7 +198,16 @@ issuesFromState cfg cid = do
 getIssue :: Config -> Card -> IO Issue
 getIssue cfg c = do
   res <- getWith (opts cfg) $ _cardcontent_url c
-  return $ either error id . eitherDecode $ res ^. responseBody
+  issue <- return $ either error id . eitherDecode $ res ^. responseBody
+  addDistance issue
+
+addDistance :: Issue -> IO Issue
+addDistance issue = do
+  let time = _iupdated_at issue
+  parsed <- parseTimeM False defaultTimeLocale "%Y-%m-%dT%H:%M:%S%Z" time
+  now <- getCurrentTime
+  let distance = distanceOfTimeInWords parsed now
+  return $ issue { _iupdated_distance = Just distance }
 
 getIssues :: Config -> Column -> IO (ColumnId, Data)
 getIssues cfg c = do
