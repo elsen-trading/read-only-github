@@ -37,6 +37,10 @@ resolver: lts-7.18
 # will not be run. This is useful for tweaking upstream packages.
 packages:
   - '.'
+  - location:
+      git: https://github.com/justinwhite/distance-of-time.git
+      commit: d98c689122fa93d16777c91e76bae49e52332739
+    extra-dep: true
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
@@ -44,7 +48,6 @@ extra-deps:
 - time-1.7.0.1
 - directory-1.2.7.1
 - unix-2.7.2.1
-- distance-of-time-0.1.1.0
 
 # Override default flag values for local packages and extra-deps
 flags: {}
