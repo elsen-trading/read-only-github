@@ -37,6 +37,10 @@ body {
   width: 10%;
 }
 
+.table td:nth-child(5) {
+  padding: 0px;
+}
+
 .page-header {
   margin: 10px 0;
 }
